@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laser LAN Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        tactical: ['Rajdhani', 'sans-serif'],
+                    },
+                    colors: {
+                        tactical: {
+                            900: '#0b0f16',
+                            800: '#131a26',
+                            border: '#1f2937'
+                        },
+                        strike: {
+                            500: '#e11d48',
+                            600: '#be123c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0f16;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: center center;
+        }
+
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.1) 50%,
+                rgba(0,0,0,0.1)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        .esport-btn {
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+    </style>
+</head>
+<body class="font-tactical text-gray-100 min-h-screen relative overflow-hidden">
+    <div class="scanlines absolute inset-0 z-0"></div>
+    <div class="absolute top-32 right-24 h-80 w-80 rounded-full bg-strike-600/10 blur-[120px]"></div>
+
+    <main class="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
+        <header class="mb-10 flex flex-col gap-6 border border-tactical-border bg-tactical-800/80 px-6 py-5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-5">
+                <img src="/static/logo.png" alt="Laser LAN" class="h-14 w-auto object-contain drop-shadow-[0_0_18px_rgba(225,29,72,0.35)]">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-gray-500">Control Layer</p>
+                    <h1 class="text-3xl font-bold uppercase tracking-[0.12em]">Operator Dashboard</h1>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="/admin/" class="border border-tactical-border px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-gray-200 transition hover:border-strike-500 hover:text-white">Admin Dashboard</a>
+                <form method="post" action="/logout/">
+                    {% csrf_token %}
+                    <button type="submit" class="esport-btn bg-strike-600 px-5 py-3 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:bg-strike-500">Logout</button>
+                </form>
+            </div>
+        </header>
+
+        <section class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <div class="border border-tactical-border bg-tactical-800/85 p-6 backdrop-blur-sm">
+                <p class="text-xs font-semibold uppercase tracking-[0.35em] text-gray-500">Status</p>
+                <h2 class="mt-3 text-4xl font-bold uppercase tracking-[0.08em]">Arena standby</h2>
+                <p class="mt-4 max-w-2xl text-base text-gray-300">
+                    Login is wired. This dashboard is the placeholder control surface until we hook live matches, player state, round flow, and hit/fire ingestion into it.
+                </p>
+
+                <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                    <div class="border border-tactical-border bg-tactical-900/80 p-4">
+                        <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Mode</p>
+                        <p class="mt-3 text-2xl font-bold uppercase tracking-[0.08em]">Bomb Defusal</p>
+                    </div>
+                    <div class="border border-tactical-border bg-tactical-900/80 p-4">
+                        <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Teams</p>
+                        <p class="mt-3 text-2xl font-bold uppercase tracking-[0.08em]">5 v 5</p>
+                    </div>
+                    <div class="border border-tactical-border bg-tactical-900/80 p-4">
+                        <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Backend</p>
+                        <p class="mt-3 text-2xl font-bold uppercase tracking-[0.08em]">Online</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border border-tactical-border bg-tactical-800/85 p-6 backdrop-blur-sm">
+                <p class="text-xs font-semibold uppercase tracking-[0.35em] text-gray-500">Next Up</p>
+                <div class="mt-4 space-y-4">
+                    <div class="border border-tactical-border bg-tactical-900/80 p-4">
+                        <h3 class="text-lg font-bold uppercase tracking-[0.12em]">Match Ops</h3>
+                        <p class="mt-2 text-sm text-gray-300">Create matches, assign players, sides, weapons, and ready state.</p>
+                    </div>
+                    <div class="border border-tactical-border bg-tactical-900/80 p-4">
+                        <h3 class="text-lg font-bold uppercase tracking-[0.12em]">Live Telemetry</h3>
+                        <p class="mt-2 text-sm text-gray-300">Ingest fire events, hit reports, reloads, and bomb actions from phones.</p>
+                    </div>
+                    <div class="border border-tactical-border bg-tactical-900/80 p-4">
+                        <h3 class="text-lg font-bold uppercase tracking-[0.12em]">Analytics</h3>
+                        <p class="mt-2 text-sm text-gray-300">Track accuracy, damage, plants, defuses, round wins, and weapon usage.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

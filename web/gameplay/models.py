@@ -54,12 +54,48 @@ class BombEventKind(models.TextChoices):
     DETONATED = "detonated", "Detonated"
 
 
+class HitSensorZone(models.TextChoices):
+    HEAD = "head", "Head"
+    TORSO = "torso", "Torso"
+    BACK = "back", "Back"
+    LEFT_ARM = "left_arm", "Left Arm"
+    RIGHT_ARM = "right_arm", "Right Arm"
+    LEFT_LEG = "left_leg", "Left Leg"
+    RIGHT_LEG = "right_leg", "Right Leg"
+    GEAR = "gear", "Gear"
+    UNKNOWN = "unknown", "Unknown"
+
+
+class HitResolutionStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    ACCEPTED = "accepted", "Accepted"
+    REJECTED_DUPLICATE = "rejected_duplicate", "Rejected Duplicate"
+    REJECTED_FRIENDLY_FIRE = "rejected_friendly_fire", "Rejected Friendly Fire"
+    REJECTED_ROUND_INACTIVE = "rejected_round_inactive", "Rejected Round Inactive"
+    REJECTED_TARGET_DEAD = "rejected_target_dead", "Rejected Target Dead"
+    REJECTED_UNKNOWN_SOURCE = "rejected_unknown_source", "Rejected Unknown Source"
+    REJECTED_INVALID_PULSE = "rejected_invalid_pulse", "Rejected Invalid Pulse"
+
+
+class FireResolutionStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    ACCEPTED = "accepted", "Accepted"
+    REJECTED_DUPLICATE = "rejected_duplicate", "Rejected Duplicate"
+    REJECTED_ROUND_INACTIVE = "rejected_round_inactive", "Rejected Round Inactive"
+    REJECTED_PLAYER_DEAD = "rejected_player_dead", "Rejected Player Dead"
+    REJECTED_UNKNOWN_SOURCE = "rejected_unknown_source", "Rejected Unknown Source"
+    REJECTED_NO_AMMO = "rejected_no_ammo", "Rejected No Ammo"
+    REJECTED_INVALID_PAYLOAD = "rejected_invalid_payload", "Rejected Invalid Payload"
+
+
 class Player(TimeStampedModel):
     display_name = models.CharField(max_length=64, unique=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["display_name"]
+        verbose_name = "player"
+        verbose_name_plural = "players"
 
     def __str__(self):
         return self.display_name
@@ -70,6 +106,8 @@ class Team(TimeStampedModel):
 
     class Meta:
         ordering = ["name"]
+        verbose_name = "team"
+        verbose_name_plural = "teams"
 
     def __str__(self):
         return self.name
@@ -81,6 +119,8 @@ class TeamMembership(TimeStampedModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:
+        verbose_name = "team membership"
+        verbose_name_plural = "team memberships"
         constraints = [
             models.UniqueConstraint(fields=["team", "player"], name="unique_team_membership"),
         ]
@@ -95,6 +135,8 @@ class Arena(TimeStampedModel):
 
     class Meta:
         ordering = ["name"]
+        verbose_name = "arena"
+        verbose_name_plural = "arenas"
 
     def __str__(self):
         return self.name
@@ -107,6 +149,8 @@ class BombSite(TimeStampedModel):
 
     class Meta:
         ordering = ["arena__name", "code"]
+        verbose_name = "bomb site"
+        verbose_name_plural = "bomb sites"
         constraints = [
             models.UniqueConstraint(fields=["arena", "code"], name="unique_bomb_site_per_arena"),
         ]
@@ -130,6 +174,8 @@ class Weapon(TimeStampedModel):
 
     class Meta:
         ordering = ["slot", "name"]
+        verbose_name = "weapon"
+        verbose_name_plural = "weapons"
 
     def __str__(self):
         return self.name
@@ -160,6 +206,8 @@ class Match(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "match"
+        verbose_name_plural = "matches"
 
     def __str__(self):
         return f"{self.get_mode_display()} match #{self.pk}"
@@ -180,6 +228,8 @@ class MatchTeam(TimeStampedModel):
 
     class Meta:
         ordering = ["match_id", "side"]
+        verbose_name = "match team"
+        verbose_name_plural = "match teams"
         constraints = [
             models.UniqueConstraint(fields=["match", "side"], name="unique_match_side"),
         ]
@@ -207,6 +257,8 @@ class MatchPlayer(TimeStampedModel):
 
     class Meta:
         ordering = ["match_id", "player__display_name"]
+        verbose_name = "match player"
+        verbose_name_plural = "match players"
         constraints = [
             models.UniqueConstraint(fields=["match", "player"], name="unique_player_per_match"),
         ]
@@ -260,6 +312,8 @@ class Round(TimeStampedModel):
 
     class Meta:
         ordering = ["match_id", "number"]
+        verbose_name = "round"
+        verbose_name_plural = "rounds"
         constraints = [
             models.UniqueConstraint(fields=["match", "number"], name="unique_round_number_per_match"),
         ]
@@ -286,9 +340,15 @@ class RoundPlayerState(TimeStampedModel):
         blank=True,
         related_name="equipped_in_round_states",
     )
+    current_magazine_ammo = models.PositiveSmallIntegerField(default=0)
+    current_reserve_ammo = models.PositiveSmallIntegerField(default=0)
+    shots_fired = models.PositiveIntegerField(default=0)
+    reload_count = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ["round_id", "match_player_id"]
+        verbose_name = "round player state"
+        verbose_name_plural = "round player states"
         constraints = [
             models.UniqueConstraint(
                 fields=["round", "match_player"],
@@ -300,10 +360,129 @@ class RoundPlayerState(TimeStampedModel):
         return f"{self.match_player} state in {self.round}"
 
 
+class FireEvent(TimeStampedModel):
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="fire_events")
+    sequence = models.PositiveIntegerField()
+    occurred_at = models.DateTimeField()
+    shooter = models.ForeignKey(
+        MatchPlayer,
+        on_delete=models.CASCADE,
+        related_name="fire_events",
+    )
+    weapon = models.ForeignKey(
+        Weapon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="fire_events",
+    )
+    trigger_identifier = models.CharField(max_length=64, db_index=True)
+    burst_size = models.PositiveSmallIntegerField(default=1)
+    reporting_device_identifier = models.CharField(max_length=64, blank=True)
+    source_device_identifier = models.CharField(max_length=64, blank=True)
+    magazine_ammo_before = models.PositiveSmallIntegerField(default=0)
+    magazine_ammo_after = models.PositiveSmallIntegerField(default=0)
+    reserve_ammo_before = models.PositiveSmallIntegerField(default=0)
+    reserve_ammo_after = models.PositiveSmallIntegerField(default=0)
+    empty_trigger = models.BooleanField(default=False)
+    requires_reload = models.BooleanField(default=False)
+    resolution_status = models.CharField(
+        max_length=32,
+        choices=FireResolutionStatus.choices,
+        default=FireResolutionStatus.PENDING,
+    )
+    resolution_notes = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["round_id", "sequence"]
+        verbose_name = "fire event"
+        verbose_name_plural = "fire events"
+        constraints = [
+            models.UniqueConstraint(fields=["round", "sequence"], name="unique_fire_sequence_per_round"),
+        ]
+        indexes = [
+            models.Index(fields=["round", "occurred_at"], name="fireevent_round_time_idx"),
+            models.Index(fields=["shooter", "occurred_at"], name="fireevent_shooter_time_idx"),
+            models.Index(fields=["weapon", "occurred_at"], name="fireevent_weapon_time_idx"),
+            models.Index(fields=["resolution_status"], name="fireevent_status_idx"),
+        ]
+
+    def __str__(self):
+        return f"Fire event {self.sequence} in {self.round}"
+
+
+class HitReport(TimeStampedModel):
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="hit_reports")
+    sequence = models.PositiveIntegerField()
+    occurred_at = models.DateTimeField()
+    victim = models.ForeignKey(
+        MatchPlayer,
+        on_delete=models.CASCADE,
+        related_name="hit_reports_received",
+    )
+    attacker = models.ForeignKey(
+        MatchPlayer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="hit_reports_sent",
+    )
+    weapon = models.ForeignKey(
+        Weapon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="hit_reports",
+    )
+    pulse_identifier = models.CharField(max_length=64, db_index=True)
+    shot_identifier = models.CharField(max_length=64, blank=True, db_index=True)
+    reporting_device_identifier = models.CharField(max_length=64, blank=True)
+    source_device_identifier = models.CharField(max_length=64, blank=True)
+    sensor_code = models.CharField(max_length=32, blank=True)
+    sensor_zone = models.CharField(
+        max_length=16,
+        choices=HitSensorZone.choices,
+        default=HitSensorZone.UNKNOWN,
+    )
+    signal_strength = models.PositiveSmallIntegerField(null=True, blank=True)
+    resolution_status = models.CharField(
+        max_length=32,
+        choices=HitResolutionStatus.choices,
+        default=HitResolutionStatus.PENDING,
+    )
+    resolution_notes = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["round_id", "sequence"]
+        verbose_name = "hit report"
+        verbose_name_plural = "hit reports"
+        constraints = [
+            models.UniqueConstraint(fields=["round", "sequence"], name="unique_hit_sequence_per_round"),
+        ]
+        indexes = [
+            models.Index(fields=["round", "occurred_at"], name="hitreport_round_time_idx"),
+            models.Index(fields=["victim", "occurred_at"], name="hitreport_victim_time_idx"),
+            models.Index(fields=["attacker", "occurred_at"], name="hitreport_attacker_time_idx"),
+            models.Index(fields=["resolution_status"], name="hitreport_status_idx"),
+        ]
+
+    def __str__(self):
+        return f"Hit report {self.sequence} in {self.round}"
+
+
 class CombatEvent(TimeStampedModel):
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="combat_events")
     sequence = models.PositiveIntegerField()
     occurred_at = models.DateTimeField()
+    hit_report = models.OneToOneField(
+        HitReport,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="combat_event",
+    )
     attacker = models.ForeignKey(
         MatchPlayer,
         on_delete=models.SET_NULL,
@@ -329,8 +508,16 @@ class CombatEvent(TimeStampedModel):
 
     class Meta:
         ordering = ["round_id", "sequence"]
+        verbose_name = "combat event"
+        verbose_name_plural = "combat events"
         constraints = [
             models.UniqueConstraint(fields=["round", "sequence"], name="unique_combat_sequence_per_round"),
+        ]
+        indexes = [
+            models.Index(fields=["round", "occurred_at"], name="combatevent_round_time_idx"),
+            models.Index(fields=["victim", "occurred_at"], name="combatevent_victim_time_idx"),
+            models.Index(fields=["attacker", "occurred_at"], name="combatevent_attacker_time_idx"),
+            models.Index(fields=["weapon", "occurred_at"], name="combatevent_weapon_time_idx"),
         ]
 
     def __str__(self):
@@ -359,6 +546,8 @@ class BombEvent(TimeStampedModel):
 
     class Meta:
         ordering = ["round_id", "sequence"]
+        verbose_name = "bomb event"
+        verbose_name_plural = "bomb events"
         constraints = [
             models.UniqueConstraint(fields=["round", "sequence"], name="unique_bomb_sequence_per_round"),
         ]

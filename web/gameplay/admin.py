@@ -1,19 +1,10 @@
+from django.apps import apps
 from django.contrib import admin
+from django.contrib.admin.sites import AlreadyRegistered
 
-from .models import Arena, BombEvent, BombSite, CombatEvent, Match, MatchPlayer, MatchTeam, Player, Round, RoundPlayerState, Team, TeamMembership, Weapon
 
-admin.site.register(Player)
-admin.site.register(Team)
-admin.site.register(TeamMembership)
-admin.site.register(Arena)
-admin.site.register(BombSite)
-admin.site.register(Weapon)
-admin.site.register(Match)
-admin.site.register(MatchTeam)
-admin.site.register(MatchPlayer)
-admin.site.register(Round)
-admin.site.register(RoundPlayerState)
-admin.site.register(CombatEvent)
-admin.site.register(BombEvent)
-
-# Register your models here.
+for model in apps.get_app_config("gameplay").get_models():
+    try:
+        admin.site.register(model)
+    except AlreadyRegistered:
+        pass

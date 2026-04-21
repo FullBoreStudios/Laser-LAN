@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Laser LAN Login</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -76,19 +76,66 @@
             <img src="/static/logo.png" alt="Logo" class="w-full h-auto object-contain" />
         </div>
 
+        <div class="text-center space-y-2">
+            <p class="text-xs font-semibold tracking-[0.35em] text-gray-500 uppercase">Arena Control</p>
+            <h1 class="text-4xl sm:text-5xl font-bold uppercase tracking-[0.1em]">Match Access</h1>
+            <p class="text-sm text-gray-400 max-w-sm">Sign in to manage rounds, monitor live state, and jump into the control dashboard.</p>
+        </div>
+
         <div class="w-full bg-tactical-800/90 backdrop-blur-sm border border-tactical-border shadow-2xl relative">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-strike-500 to-transparent"></div>
 
-            <form class="p-8 flex flex-col gap-5">
+            {% if request.user.is_authenticated %}
+            <div class="p-8 flex flex-col gap-6">
+                <div class="border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm tracking-wide text-green-100">
+                    Logged in as {{ request.user.username }}.
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Session Status</p>
+                    <h2 class="text-3xl font-bold uppercase tracking-[0.08em] text-white">Operator access granted</h2>
+                    <p class="text-sm leading-6 text-gray-300">
+                        Continue to the dashboard to manage matches, inspect state, and jump into admin tools.
+                    </p>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <a
+                        href="/dashboard/"
+                        class="esport-btn block w-full bg-strike-600 hover:bg-strike-500 text-center text-white font-bold text-lg py-3 uppercase tracking-widest transition-all duration-300 hover:shadow-[0_0_20px_rgba(225,29,72,0.4)]">
+                        Open Dashboard
+                    </a>
+                    <form method="post" action="/logout/">
+                        {% csrf_token %}
+                        <button
+                            type="submit"
+                            class="w-full border border-tactical-border bg-tactical-900 hover:border-strike-500 text-white font-bold text-lg py-3 uppercase tracking-widest transition-colors">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <form method="post" action="/login/" class="p-8 flex flex-col gap-5">
+                {% csrf_token %}
+
+                {% if login_failed %}
+                <div class="border border-strike-500/40 bg-strike-500/10 px-4 py-3 text-sm tracking-wide text-red-100">
+                    Invalid username or password.
+                </div>
+                {% endif %}
 
                 <div class="flex flex-col gap-1">
                     <label for="username" class="text-xs font-semibold tracking-widest text-gray-400 uppercase">Username</label>
                     <input
                         type="text"
                         id="username"
+                        name="username"
                         class="w-full bg-tactical-900 border border-tactical-border text-white px-4 py-3 focus:outline-none focus:border-strike-500 focus:ring-1 focus:ring-strike-500 transition-colors tracking-wide placeholder-gray-600"
                         placeholder="ENTER USERNAME"
+                        value="{{ form.username.value|default:'' }}"
                         required
+                        autofocus
                     >
                 </div>
 
@@ -97,6 +144,7 @@
                     <input
                         type="password"
                         id="password"
+                        name="password"
                         class="w-full bg-tactical-900 border border-tactical-border text-white px-4 py-3 focus:outline-none focus:border-strike-500 focus:ring-1 focus:ring-strike-500 transition-colors tracking-wide placeholder-gray-600"
                         placeholder="ENTER PASSWORD"
                         required
@@ -110,6 +158,12 @@
                 </button>
 
             </form>
+            {% endif %}
+
+            <div class="px-8 pb-8 pt-1 flex items-center justify-between text-xs uppercase tracking-[0.25em] text-gray-500">
+                <span>{% if request.user.is_authenticated %}Session active{% else %}Custom auth flow{% endif %}</span>
+                <a href="/admin/" class="text-gray-300 transition hover:text-white">Admin Dashboard</a>
+            </div>
 
             <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-gray-500"></div>
             <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-gray-500"></div>
