@@ -1,5 +1,10 @@
-from django.http import HttpResponse
-
+# import render
+from django.shortcuts import render
 
 def home(request):
-    return HttpResponse("Laser LAN is online. API docs live at /api/docs.")
+
+
+
+    return render(request, 'base/index.html', {
+
+    })
