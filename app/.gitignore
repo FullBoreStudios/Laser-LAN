@@ -33,6 +33,7 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+!android/app/laserlan-dev-release.keystore
 .kotlin/
 
 # node.js
